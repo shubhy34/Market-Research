@@ -9,3 +9,5 @@ matplotlib
 plotly
 pytrends
 google-api-python-client
+textblob
+praw
