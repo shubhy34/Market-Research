@@ -1,30 +1,91 @@
 import streamlit as st
-import plotly.express as px
+import requests
 import pandas as pd
+import plotly.express as px
+from textblob import TextBlob
+import openai
 
-# Sidebar Setup
+# --- API Keys ---
+SERPAPI_KEY = "your_serpapi_key"
+NEWSAPI_KEY = "your_newsapi_key"
+OPENAI_API_KEY = "your_openai_api_key"
+REDDIT_CLIENT_ID = "your_reddit_client_id"
+REDDIT_SECRET = "your_reddit_client_secret"
+REDDIT_USER_AGENT = "your_user_agent"
+
+# --- Page Config ---
+st.set_page_config(page_title="InsightGenie", layout="wide")
+
 st.sidebar.title('InsightGenie')
 st.sidebar.markdown('Use the sidebar to navigate through the tool.')
 
-# Main content area
-st.title('Welcome to InsightGenie')
-st.markdown('Use the sidebar to choose your action.')
+# --- User Input ---
+company_name = st.text_input('Enter a keyword or company name to analyze trends:')
 
-# Adding interactive functionality
-st.header("Market Research")
-keyword = st.text_input('Enter a keyword or company name to analyze trends:')
-if keyword:
-    st.write(f'Analyzing trends for: {keyword}')
-    # Example: Replace with your real data or API calls
-    data = {'Date': ['2023-01-01', '2023-01-02', '2023-01-03'],
-            'Keyword Frequency': [10, 12, 15]}
-    df = pd.DataFrame(data)
+if company_name:
+    st.header(f"📊 Insights for {company_name}")
 
-    # Display a chart
-    fig = px.line(df, x='Date', y='Keyword Frequency', title=f'{keyword} Keyword Frequency Over Time')
+    # --- Keyword Trend (Mock Data or Replace with Google Trends API) ---
+    st.subheader("📈 Keyword Trend")
+    df = pd.DataFrame({
+        'Date': pd.date_range(start='2024-01-01', periods=10),
+        'Keyword Frequency': [12, 15, 10, 18, 20, 17, 23, 19, 25, 30]
+    })
+    fig = px.line(df, x='Date', y='Keyword Frequency', title=f'{company_name} Keyword Frequency Over Time')
     st.plotly_chart(fig)
 
-    # Add button for fetching mentions or news
-    if st.button('Get Latest Mentions'):
-        st.write(f'Fetching latest mentions of {keyword}...')
-        # Add logic to call API (SerpAPI or NewsAPI) for fetching mentions.
+    # --- Company Profiling using SerpAPI ---
+    st.subheader("🏢 Company Profile")
+    params = {"q": company_name, "api_key": SERPAPI_KEY}
+    serp_response = requests.get("https://serpapi.com/search", params=params).json()
+    if 'organic_results' in serp_response:
+        for res in serp_response['organic_results'][:3]:
+            st.write(f"**Title**: {res.get('title')}")
+            st.write(f"**Snippet**: {res.get('snippet')}")
+            st.write(f"**Link**: {res.get('link')}")
+            st.markdown("---")
+    else:
+        st.write("No company info found.")
+
+    # --- News Trend Tracker using NewsAPI ---
+    st.subheader("📰 Trend Tracker (News)")
+    news_url = f"https://newsapi.org/v2/everything?q={company_name}&apiKey={NEWSAPI_KEY}"
+    news_response = requests.get(news_url).json()
+    if news_response['status'] == 'ok':
+        for article in news_response['articles'][:5]:
+            st.write(f"**{article['title']}**")
+            st.write(article['description'])
+            st.write(article['url'])
+            st.markdown("---")
+    else:
+        st.write("No news found.")
+
+    # --- Sentiment Analysis (Reddit via PRAW) ---
+    st.subheader("💬 Sentiment Analysis (Reddit)")
+    try:
+        import praw
+        reddit = praw.Reddit(
+            client_id=REDDIT_CLIENT_ID,
+            client_secret=REDDIT_SECRET,
+            user_agent=REDDIT_USER_AGENT
+        )
+        posts = reddit.subreddit('all').search(company_name, limit=5)
+        for post in posts:
+            text = post.title + " " + post.selftext
+            sentiment = TextBlob(text).sentiment.polarity
+            label = "Positive" if sentiment > 0 else "Negative" if sentiment < 0 else "Neutral"
+            st.write(f"**{post.title}** — Sentiment: {label}")
+    except:
+        st.write("Reddit API error. Check credentials or install praw.")
+
+    # --- Survey Generator (OpenAI) ---
+    st.subheader("📝 Custom Survey Generator")
+    openai.api_key = OPENAI_API_KEY
+    prompt = f"Generate 5 customer research survey questions for {company_name}. Focus on satisfaction, competitor analysis, and user needs."
+    try:
+        completion = openai.Completion.create(engine="text-davinci-003", prompt=prompt, max_tokens=150)
+        questions = completion.choices[0].text.strip().split('\n')
+        for q in questions:
+            st.write(f"- {q.strip('- ').strip()}")
+    except:
+        st.write("OpenAI API error. Check API key.")
