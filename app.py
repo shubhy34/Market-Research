@@ -6,12 +6,12 @@ from textblob import TextBlob
 import openai
 
 # --- API Keys ---
-SERPAPI_KEY = "your_serpapi_key"
-NEWSAPI_KEY = "your_newsapi_key"
-OPENAI_API_KEY = "your_openai_api_key"
-REDDIT_CLIENT_ID = "your_reddit_client_id"
-REDDIT_SECRET = "your_reddit_client_secret"
-REDDIT_USER_AGENT = "your_user_agent"
+SERPAPI_KEY = "cb77062e09a413a5156e5a92440ab298d05e33ddc00a551a852b240fca149f22"
+NEWSAPI_KEY = "7271cff2fd6949f4b617adfa2f44d6d5"
+OPENAI_API_KEY = "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"
+REDDIT_CLIENT_ID = "Awkward_Ad_2832"
+REDDIT_SECRET = "uhvXmNIpzP8vgEfsiyXoK4PrFsKyvg"
+REDDIT_USER_AGENT = "InsightGenieBot/0.1"
 
 # --- Page Config ---
 st.set_page_config(page_title="InsightGenie", layout="wide")
